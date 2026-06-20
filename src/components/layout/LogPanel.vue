@@ -20,7 +20,7 @@ import {
 } from 'lucide-vue-next'
 import { useLogStore } from '@/stores/log'
 import { URGENCY_CONFIG } from '@/utils/mock'
-import { exportCsv, formatExportTime } from '@/utils/exportCsv'
+import { exportCsv, formatExportTime, reformatTime } from '@/utils/exportCsv'
 import type { LogEventType } from '@/types'
 
 const logStore = useLogStore()
@@ -84,7 +84,7 @@ const handleExport = () => {
   rows.push(['时间', '事件类型', '内容描述', '位置', '紧急程度'])
   logStore.sortedLogs.forEach((log) => {
     rows.push([
-      log.timestamp,
+      reformatTime(log.timestamp),
       log.typeLabel,
       log.content,
       log.location || '-',

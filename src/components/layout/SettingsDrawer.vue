@@ -87,7 +87,7 @@ const currentTimeSample = computed(() => {
             <h3 class="text-sm font-semibold text-primary">数据刷新间隔</h3>
           </div>
           <p class="text-[11px] text-muted mb-3 leading-relaxed">
-            控制分选线与包装区实时数据的更新频率，影响图表滚动节奏
+            控制分选线、包装区实时数据的更新频率，影响数值、图表及告警模拟的整体节奏
           </p>
           <div class="grid grid-cols-3 gap-2">
             <button

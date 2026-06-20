@@ -21,7 +21,7 @@ import {
 import { useAlertStore } from '@/stores/alert'
 import { URGENCY_CONFIG } from '@/utils/mock'
 import { filterAlerts } from '@/utils/alertFilter'
-import { exportCsv, STATUS_LABELS, formatExportTime } from '@/utils/exportCsv'
+import { exportCsv, STATUS_LABELS, formatExportTime, reformatTime } from '@/utils/exportCsv'
 import type { AlertEvent, FaultType, Urgency } from '@/types'
 import LogPanel from './LogPanel.vue'
 
@@ -184,10 +184,10 @@ const handleExport = () => {
       ev.location,
       URGENCY_CONFIG[ev.urgency]?.label || ev.urgency,
       ev.detail,
-      ev.createdAt,
+      reformatTime(ev.createdAt),
       statusMeta[ev.status]?.label || STATUS_LABELS[ev.status] || ev.status,
       ev.receiver || '',
-      (ev as AlertEvent & { resolvedAt?: string }).resolvedAt || '',
+      reformatTime((ev as AlertEvent & { resolvedAt?: string }).resolvedAt) || '',
     ])
   })
   exportCsv('告警事件', rows)

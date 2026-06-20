@@ -52,10 +52,10 @@ const startSortingTimer = () => {
   sortingTimer = setInterval(sortingTick, settings.refreshInterval)
 }
 
-/** 启动包装定时器 */
+/** 启动包装定时器（跟随刷新间隔设置） */
 const startPackagingTimer = () => {
   if (packagingTimer) clearInterval(packagingTimer)
-  packagingTimer = setInterval(packagingTick, 3000)
+  packagingTimer = setInterval(packagingTick, settings.refreshInterval)
 }
 
 /** 启动数据模拟服务 */
@@ -64,11 +64,12 @@ const startSimulation = () => {
   startPackagingTimer()
 }
 
-/** 刷新间隔变更时重建分选线定时器 */
+/** 刷新间隔变更时同时重建分选线和包装区定时器 */
 watch(
   () => settings.refreshInterval,
   () => {
     startSortingTimer()
+    startPackagingTimer()
   }
 )
 

@@ -15,7 +15,7 @@ import { useSortingStore } from '@/stores/sorting'
 import { useSettingsStore } from '@/stores/settings'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
 import { useChartTheme } from '@/composables/useECharts'
-import { exportCsv, STATUS_LABELS, formatExportTime } from '@/utils/exportCsv'
+import { exportCsv, STATUS_LABELS, formatExportTime, reformatTime } from '@/utils/exportCsv'
 import type { SpeedTimeRange } from '@/types'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
@@ -176,7 +176,7 @@ const handleExport = () => {
   rows.push([`=== 过去${timeRangeLabels[store.speedTimeRange]}速度历史记录 ===`])
   rows.push(['序号', '时间戳', '分选速度(吨/小时)'])
   store.speedHistory.forEach((p, i) => {
-    rows.push([i + 1, p.time, p.value.toFixed(2)])
+    rows.push([i + 1, reformatTime(p.time), p.value.toFixed(2)])
   })
   exportCsv('分选线数据', rows)
 }
