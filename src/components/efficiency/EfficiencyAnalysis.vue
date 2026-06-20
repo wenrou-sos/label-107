@@ -15,7 +15,7 @@ import { useEfficiencyStore } from '@/stores/efficiency'
 import { useChartTheme } from '@/composables/useECharts'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
 import type { EfficiencyDimension } from '@/types'
-import { exportCsv } from '@/utils/exportCsv'
+import { exportCsv, formatExportTime } from '@/utils/exportCsv'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, MarkAreaComponent, CanvasRenderer])
 
@@ -153,7 +153,7 @@ const handleExport = () => {
   const dimLabel = store.dimension === 'hour' ? '按小时' : '按班次'
   const rows: unknown[][] = []
   rows.push(['当日产线效率分析报表'])
-  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push(['导出时间', formatExportTime()])
   rows.push(['分析维度', dimLabel])
   rows.push([])
   rows.push(['整体汇总'])

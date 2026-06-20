@@ -5,21 +5,23 @@
  * - 分选速度（吨/小时，5秒更新）
  * - 运行状态指示灯
  */
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import { TrendingUp, Zap, Activity, Download, Pause, Play, Clock } from 'lucide-vue-next'
 import { useSortingStore } from '@/stores/sorting'
+import { useSettingsStore } from '@/stores/settings'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
 import { useChartTheme } from '@/composables/useECharts'
-import { exportCsv, STATUS_LABELS } from '@/utils/exportCsv'
+import { exportCsv, STATUS_LABELS, formatExportTime } from '@/utils/exportCsv'
 import type { SpeedTimeRange } from '@/types'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
 
 const store = useSortingStore()
+const settings = useSettingsStore()
 const { isDark, palette } = useChartTheme()
 
 /** 时间范围选项 */
@@ -64,34 +66,54 @@ watch(
 const chartRef = ref<HTMLDivElement | null>(null)
 let chart: echarts.ECharts | null = null
 
-const buildOption = () => ({
-  grid: { top: 6, right: 4, bottom: 4, left: 4 },
-  tooltip: {
-    trigger: 'axis',
-    backgroundColor: palette.tooltipBg,
-    borderColor: palette.tooltipBorder,
-    textStyle: { color: palette.text, fontSize: 11 },
-    formatter: (p: { axisValue: string; data: number }[]) =>
-      `${p[0].axisValue}<br/>速度 <b>${p[0].data}</b> t/h`,
-  },
-  xAxis: { type: 'category', show: false, data: store.speedHistory.map((s) => s.time) },
-  yAxis: { type: 'value', show: false, min: 2, max: 6 },
-  series: [
-    {
-      type: 'line',
-      data: store.speedHistory.map((s) => s.value),
-      smooth: true,
-      symbol: 'none',
-      lineStyle: { width: 2, color: isDark.value ? '#4F8DFF' : '#2F7BFF' },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(79,141,255,0.35)' },
-          { offset: 1, color: 'rgba(79,141,255,0.02)' },
-        ]),
-      },
+/** 读取当前主题色（用于图表线条与面积） */
+const getChartColor = (): string => {
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue('--chart-line')
+    .trim()
+  return v || (isDark.value ? '#4F8DFF' : '#2F7BFF')
+}
+
+/** hex 转 rgba 字符串 */
+const hexToRgba = (hex: string, alpha: number): string => {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.substring(0, 2), 16)
+  const g = parseInt(h.substring(2, 4), 16)
+  const b = parseInt(h.substring(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+const buildOption = () => {
+  const lineColor = getChartColor()
+  return {
+    grid: { top: 6, right: 4, bottom: 4, left: 4 },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: palette.tooltipBg,
+      borderColor: palette.tooltipBorder,
+      textStyle: { color: palette.text, fontSize: 11 },
+      formatter: (p: { axisValue: string; data: number }[]) =>
+        `${p[0].axisValue}<br/>速度 <b>${p[0].data}</b> t/h`,
     },
-  ],
-})
+    xAxis: { type: 'category', show: false, data: store.speedHistory.map((s) => s.time) },
+    yAxis: { type: 'value', show: false, min: 2, max: 6 },
+    series: [
+      {
+        type: 'line',
+        data: store.speedHistory.map((s) => s.value),
+        smooth: true,
+        symbol: 'none',
+        lineStyle: { width: 2, color: lineColor },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: hexToRgba(lineColor, 0.35) },
+            { offset: 1, color: hexToRgba(lineColor, 0.02) },
+          ]),
+        },
+      },
+    ],
+  }
+}
 
 const renderChart = () => {
   if (!chart) return
@@ -116,6 +138,14 @@ onMounted(() => {
       renderChart()
     }
   })
+  // 主题色变化时重绘图表以更新线条颜色
+  watch(
+    () => settings.themeColor,
+    () => {
+      // 等待 CSS 变量更新后再重绘
+      nextTick(() => renderChart())
+    }
+  )
 })
 
 const handleResize = () => chart?.resize()
@@ -134,7 +164,7 @@ const handleExport = () => {
   const rows: unknown[][] = []
   // 汇总信息
   rows.push(['分选线监控数据报表'])
-  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push(['导出时间', formatExportTime()])
   rows.push([])
   rows.push(['今日处理总量(吨)', store.totalWeight.toFixed(2)])
   rows.push(['分选速度(吨/小时)', store.speed.toFixed(1)])

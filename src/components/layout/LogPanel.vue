@@ -20,7 +20,7 @@ import {
 } from 'lucide-vue-next'
 import { useLogStore } from '@/stores/log'
 import { URGENCY_CONFIG } from '@/utils/mock'
-import { exportCsv } from '@/utils/exportCsv'
+import { exportCsv, formatExportTime } from '@/utils/exportCsv'
 import type { LogEventType } from '@/types'
 
 const logStore = useLogStore()
@@ -78,7 +78,7 @@ const getTypeIcon = (type: LogEventType) => {
 const handleExport = () => {
   const rows: unknown[][] = []
   rows.push(['运行日志事件报表'])
-  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push(['导出时间', formatExportTime()])
   rows.push(['日志总数', logStore.logs.length])
   rows.push([])
   rows.push(['时间', '事件类型', '内容描述', '位置', '紧急程度'])

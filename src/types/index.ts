@@ -93,6 +93,15 @@ export interface SpeedPoint {
 /** 速度趋势图时间范围 */
 export type SpeedTimeRange = '1min' | '5min' | '15min'
 
+/** 数据刷新间隔（毫秒） */
+export type RefreshInterval = 3000 | 5000 | 10000
+
+/** 主题色预设 */
+export type ThemeColor = 'blue' | 'green' | 'purple'
+
+/** CSV 时间格式 */
+export type CsvTimeFormat = '24h' | '12h'
+
 /** 运行日志事件类型 */
 export type LogEventType =
   | 'status_change'

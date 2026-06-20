@@ -7,6 +7,7 @@ import { onMounted, onBeforeUnmount, watch } from 'vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import SideNav from '@/components/layout/SideNav.vue'
 import AlertPanel from '@/components/layout/AlertPanel.vue'
+import SettingsDrawer from '@/components/layout/SettingsDrawer.vue'
 import SortingMonitor from '@/components/sorting/SortingMonitor.vue'
 import GradeAnalysis from '@/components/grade/GradeAnalysis.vue'
 import PackagingMonitor from '@/components/packaging/PackagingMonitor.vue'
@@ -16,35 +17,60 @@ import { useSortingStore } from '@/stores/sorting'
 import { usePackagingStore } from '@/stores/packaging'
 import { useAlertStore } from '@/stores/alert'
 import { useLogStore } from '@/stores/log'
+import { useSettingsStore } from '@/stores/settings'
 import { genFaultEvent } from '@/utils/mock'
 
 const sortingStore = useSortingStore()
 const packagingStore = usePackagingStore()
 const alertStore = useAlertStore()
 const logStore = useLogStore()
+const settings = useSettingsStore()
 
-let sortingTimer: ReturnType<typeof setInterval>
-let packagingTimer: ReturnType<typeof setInterval>
+let sortingTimer: ReturnType<typeof setInterval> | null = null
+let packagingTimer: ReturnType<typeof setInterval> | null = null
 let faultTimer: ReturnType<typeof setTimeout>
+
+/** 分选线单次 tick */
+const sortingTick = () => {
+  sortingStore.tick()
+  // 小概率触发故障（约每 30-50 秒一次）
+  if (Math.random() < 0.25 && sortingStore.status !== 'fault') {
+    alertStore.triggerFault()
+    // 触发故障时联动分选线状态为"故障"
+    sortingStore.setStatus('fault')
+  }
+}
+
+/** 包装 tick（按固定 3 秒推进，体现不同节奏） */
+const packagingTick = () => {
+  packagingStore.tick()
+}
+
+/** 启动分选线定时器（按当前刷新间隔） */
+const startSortingTimer = () => {
+  if (sortingTimer) clearInterval(sortingTimer)
+  sortingTimer = setInterval(sortingTick, settings.refreshInterval)
+}
+
+/** 启动包装定时器 */
+const startPackagingTimer = () => {
+  if (packagingTimer) clearInterval(packagingTimer)
+  packagingTimer = setInterval(packagingTick, 3000)
+}
 
 /** 启动数据模拟服务 */
 const startSimulation = () => {
-  // 分选线数据每 5 秒更新
-  sortingTimer = setInterval(() => {
-    sortingStore.tick()
-    // 小概率触发故障（约每 30-50 秒一次）
-    if (Math.random() < 0.25 && sortingStore.status !== 'fault') {
-      alertStore.triggerFault()
-      // 触发故障时联动分选线状态为"故障"
-      sortingStore.setStatus('fault')
-    }
-  }, 5000)
-
-  // 包装件数每 3 秒推进
-  packagingTimer = setInterval(() => {
-    packagingStore.tick()
-  }, 3000)
+  startSortingTimer()
+  startPackagingTimer()
 }
+
+/** 刷新间隔变更时重建分选线定时器 */
+watch(
+  () => settings.refreshInterval,
+  () => {
+    startSortingTimer()
+  }
+)
 
 /** 当所有未处理告警都被解决时，恢复分选线为"运行中" */
 watch(
@@ -80,8 +106,8 @@ onMounted(() => {
   startSimulation()
 })
 onBeforeUnmount(() => {
-  clearInterval(sortingTimer)
-  clearInterval(packagingTimer)
+  if (sortingTimer) clearInterval(sortingTimer)
+  if (packagingTimer) clearInterval(packagingTimer)
   clearTimeout(faultTimer)
 })
 </script>
@@ -127,5 +153,8 @@ onBeforeUnmount(() => {
 
     <!-- 故障告警弹窗 -->
     <FaultDialog />
+
+    <!-- 系统设置抽屉 -->
+    <SettingsDrawer />
   </div>
 </template>

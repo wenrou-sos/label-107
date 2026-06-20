@@ -3,7 +3,34 @@
  * - UTF-8 with BOM 编码，确保 Excel 打开中文不乱码
  * - 自动转义包含逗号、引号、换行的字段
  * - 文件名带时间戳
+ * - 支持按设置项选择 12/24 小时时间格式
  */
+import type { CsvTimeFormat } from '@/types'
+
+/** 根据时间格式设置生成时间字符串 */
+function formatDateTime(d: Date, format: CsvTimeFormat): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  if (format === '12h') {
+    let h = d.getHours()
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    h = h % 12 || 12
+    return `${date} ${pad(h)}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${ampm}`
+  }
+  return `${date} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+/** 获取当前 CSV 时间格式设置（避免循环依赖，运行时读取） */
+function getCsvTimeFormat(): CsvTimeFormat {
+  try {
+    const raw = localStorage.getItem('app-settings')
+    if (!raw) return '24h'
+    const parsed = JSON.parse(raw) as { csvTimeFormat?: CsvTimeFormat }
+    return parsed.csvTimeFormat === '12h' ? '12h' : '24h'
+  } catch {
+    return '24h'
+  }
+}
 
 /**
  * 转义 CSV 字段
@@ -31,7 +58,7 @@ export function toCsv(rows: unknown[][]): string {
 
 /**
  * 生成带时间戳的文件名
- * 格式：名称_YYYY-MM-DD_HH-mm.csv
+ * 格式：名称_YYYY-MM-DD_HH-mm.csv（始终 24 小时制，避免文件名出现 AM/PM 空格）
  */
 export function generateFileName(baseName: string): string {
   const d = new Date()
@@ -39,6 +66,14 @@ export function generateFileName(baseName: string): string {
   const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
   const time = `${pad(d.getHours())}-${pad(d.getMinutes())}`
   return `${baseName}_${date}_${time}.csv`
+}
+
+/**
+ * 按当前设置的时间格式生成"导出时间"字符串
+ * 供 CSV 内容中的导出时间字段使用
+ */
+export function formatExportTime(d: Date = new Date()): string {
+  return formatDateTime(d, getCsvTimeFormat())
 }
 
 /**

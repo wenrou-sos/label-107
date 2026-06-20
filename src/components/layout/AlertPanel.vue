@@ -21,7 +21,7 @@ import {
 import { useAlertStore } from '@/stores/alert'
 import { URGENCY_CONFIG } from '@/utils/mock'
 import { filterAlerts } from '@/utils/alertFilter'
-import { exportCsv, STATUS_LABELS } from '@/utils/exportCsv'
+import { exportCsv, STATUS_LABELS, formatExportTime } from '@/utils/exportCsv'
 import type { AlertEvent, FaultType, Urgency } from '@/types'
 import LogPanel from './LogPanel.vue'
 
@@ -163,7 +163,7 @@ const toggleUrgencyFilter = (urgency: Urgency) => {
 const handleExport = () => {
   const rows: unknown[][] = []
   rows.push(['告警中心全部事件报表'])
-  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push(['导出时间', formatExportTime()])
   rows.push(['告警总数', alertStore.events.length])
   rows.push([])
   rows.push([

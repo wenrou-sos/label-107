@@ -6,6 +6,8 @@ import { ref, computed } from 'vue'
 import type { AlertEvent } from '@/types'
 import { genFaultEvent } from '@/utils/mock'
 import { useLogStore } from './log'
+import { useSettingsStore } from './settings'
+import { playAlertSound } from '@/utils/sound'
 
 export const useAlertStore = defineStore('alert', () => {
   const events = ref<AlertEvent[]>([])
@@ -15,6 +17,7 @@ export const useAlertStore = defineStore('alert', () => {
   const repairTeam = ref('维修组 A（当班）')
 
   const logStore = useLogStore()
+  const settings = useSettingsStore()
 
   const pendingCount = computed(
     () => events.value.filter((e) => e.status === 'pending').length
@@ -40,6 +43,10 @@ export const useAlertStore = defineStore('alert', () => {
     if (events.value.length > 50) events.value.pop()
     if (!activeDialog.value) activeDialog.value = ev
     logStore.logAlertTriggered(ev)
+    // 告警音效（受设置开关控制）
+    if (settings.alertSoundEnabled) {
+      playAlertSound()
+    }
   }
 
   /** 推送至维修组（仅标记"已推送"，需维修组另行"确认接收"） */

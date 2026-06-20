@@ -11,7 +11,7 @@ import { PackageCheck, Minus, Plus, Users, Boxes, Download } from 'lucide-vue-ne
 import { usePackagingStore } from '@/stores/packaging'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
 import { SPEC_OPTIONS, FRUIT_VARIETIES } from '@/utils/mock'
-import { exportCsv } from '@/utils/exportCsv'
+import { exportCsv, formatExportTime } from '@/utils/exportCsv'
 
 const store = usePackagingStore()
 
@@ -39,7 +39,7 @@ const specIcons: Record<string, string> = {
 const handleExport = () => {
   const rows: unknown[][] = []
   rows.push(['包装区监控报表'])
-  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push(['导出时间', formatExportTime()])
   rows.push([])
   rows.push(['当前品种', store.state.variety.name])
   const spec = SPEC_OPTIONS.find((o) => o.value === store.state.spec)

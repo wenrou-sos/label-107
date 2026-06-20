@@ -13,7 +13,7 @@ import { useSortingStore } from '@/stores/sorting'
 import { useChartTheme } from '@/composables/useECharts'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
 import { Download } from 'lucide-vue-next'
-import { exportCsv } from '@/utils/exportCsv'
+import { exportCsv, formatExportTime } from '@/utils/exportCsv'
 
 echarts.use([PieChart, TooltipComponent, LegendComponent, CanvasRenderer])
 
@@ -98,7 +98,7 @@ const animatedWeights = computed(() => [w0.value, w1.value, w2.value, w3.value])
 const handleExport = () => {
   const rows: unknown[][] = []
   rows.push(['等级产出比例分析报表'])
-  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push(['导出时间', formatExportTime()])
   rows.push([])
   rows.push(['今日累计总量(吨)', store.totalWeight.toFixed(2)])
   rows.push([])

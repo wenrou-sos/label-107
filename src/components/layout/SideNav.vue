@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Settings,
 } from 'lucide-vue-next'
+import { useSettingsStore } from '@/stores/settings'
 
 interface NavItem {
   id: string
@@ -28,6 +29,7 @@ const items: NavItem[] = [
 ]
 
 const active = ref('sorting')
+const settings = useSettingsStore()
 
 const scrollTo = (id: string) => {
   active.value = id
@@ -86,11 +88,15 @@ const scrollTo = (id: string) => {
     <div class="flex-1" />
 
     <button
-      class="w-12 h-12 rounded-xl flex items-center justify-center transition-all hover:scale-105"
+      class="w-12 h-12 rounded-xl flex items-center justify-center transition-all hover:scale-105 group"
       style="background: var(--bg-card)"
       title="系统设置"
+      @click="settings.openDrawer()"
     >
-      <Settings :size="20" class="text-muted" />
+      <Settings
+        :size="20"
+        class="text-muted transition-colors duration-300 group-hover:text-accent group-hover:rotate-90"
+      />
     </button>
   </nav>
 </template>
