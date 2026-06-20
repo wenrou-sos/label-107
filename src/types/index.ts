@@ -89,3 +89,25 @@ export interface SpeedPoint {
   time: string
   value: number
 }
+
+/** 运行日志事件类型 */
+export type LogEventType =
+  | 'status_change'
+  | 'alert_triggered'
+  | 'alert_resolved'
+  | 'alert_received'
+  | 'alert_pushed'
+  | 'system_start'
+
+/** 运行日志条目 */
+export interface RunLogEntry {
+  id: string
+  type: LogEventType
+  typeLabel: string
+  timestamp: string
+  content: string
+  location?: string
+  urgency?: Urgency
+  previousStatus?: RunStatus
+  newStatus?: RunStatus
+}

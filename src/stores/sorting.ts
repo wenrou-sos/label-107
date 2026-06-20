@@ -10,6 +10,7 @@ import {
   genGradeDistribution,
   genSpeedHistory,
 } from '@/utils/mock'
+import { useLogStore } from './log'
 
 export const useSortingStore = defineStore('sorting', () => {
   const state = ref<SortingState>(genSortingState())
@@ -19,6 +20,8 @@ export const useSortingStore = defineStore('sorting', () => {
   const totalWeight = computed(() => state.value.todayTotal)
   const speed = computed(() => state.value.sortingSpeed)
   const status = computed(() => state.value.status)
+
+  const logStore = useLogStore()
 
   /** 每 5 秒推进实时数据 */
   const tick = () => {
@@ -35,7 +38,11 @@ export const useSortingStore = defineStore('sorting', () => {
 
   /** 设置运行状态 */
   const setStatus = (s: SortingState['status']) => {
-    state.value.status = s
+    const previousStatus = state.value.status
+    if (previousStatus !== s) {
+      state.value.status = s
+      logStore.logStatusChange(previousStatus, s)
+    }
   }
 
   return { state, grades, speedHistory, totalWeight, speed, status, tick, setStatus }

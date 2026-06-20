@@ -15,10 +15,13 @@ import FaultDialog from '@/components/alert/FaultDialog.vue'
 import { useSortingStore } from '@/stores/sorting'
 import { usePackagingStore } from '@/stores/packaging'
 import { useAlertStore } from '@/stores/alert'
+import { useLogStore } from '@/stores/log'
+import { genFaultEvent } from '@/utils/mock'
 
 const sortingStore = useSortingStore()
 const packagingStore = usePackagingStore()
 const alertStore = useAlertStore()
+const logStore = useLogStore()
 
 let sortingTimer: ReturnType<typeof setInterval>
 let packagingTimer: ReturnType<typeof setInterval>
@@ -53,7 +56,27 @@ watch(
   }
 )
 
+const initMockLogs = () => {
+  logStore.logSystemStart()
+
+  const pastAlert1 = genFaultEvent()
+  pastAlert1.createdAt = new Date(Date.now() - 1000 * 60 * 8).toLocaleString('zh-CN', { hour12: false })
+  logStore.logAlertTriggered(pastAlert1)
+  logStore.logAlertPushed(pastAlert1, '维修组 A')
+  logStore.logAlertReceived(pastAlert1, '张师傅')
+  logStore.logAlertResolved(pastAlert1, '张师傅')
+
+  const pastAlert2 = genFaultEvent()
+  pastAlert2.createdAt = new Date(Date.now() - 1000 * 60 * 5).toLocaleString('zh-CN', { hour12: false })
+  logStore.logAlertTriggered(pastAlert2)
+  logStore.logAlertPushed(pastAlert2, '维修组 B')
+  logStore.logAlertReceived(pastAlert2, '李工')
+
+  logStore.logStatusChange('stopped', 'running')
+}
+
 onMounted(() => {
+  initMockLogs()
   startSimulation()
 })
 onBeforeUnmount(() => {

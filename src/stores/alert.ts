@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { AlertEvent } from '@/types'
 import { genFaultEvent } from '@/utils/mock'
+import { useLogStore } from './log'
 
 export const useAlertStore = defineStore('alert', () => {
   const events = ref<AlertEvent[]>([])
@@ -12,6 +13,8 @@ export const useAlertStore = defineStore('alert', () => {
   const activeDialog = ref<AlertEvent | null>(null)
   /** 推送目标维修组 */
   const repairTeam = ref('维修组 A（当班）')
+
+  const logStore = useLogStore()
 
   const pendingCount = computed(
     () => events.value.filter((e) => e.status === 'pending').length
@@ -36,6 +39,7 @@ export const useAlertStore = defineStore('alert', () => {
     events.value.unshift(ev)
     if (events.value.length > 50) events.value.pop()
     if (!activeDialog.value) activeDialog.value = ev
+    logStore.logAlertTriggered(ev)
   }
 
   /** 推送至维修组（仅标记"已推送"，需维修组另行"确认接收"） */
@@ -44,6 +48,7 @@ export const useAlertStore = defineStore('alert', () => {
     if (ev && ev.status === 'pending') {
       ev.status = 'pushed'
       ev.receiver = repairTeam.value
+      logStore.logAlertPushed(ev, ev.receiver)
     }
   }
 
@@ -53,6 +58,7 @@ export const useAlertStore = defineStore('alert', () => {
     if (ev && (ev.status === 'pending' || ev.status === 'pushed')) {
       ev.status = 'received'
       ev.receiver = ev.receiver || repairTeam.value
+      logStore.logAlertReceived(ev, ev.receiver)
     }
   }
 
@@ -62,6 +68,7 @@ export const useAlertStore = defineStore('alert', () => {
     if (ev && ev.status !== 'resolved') {
       ev.status = 'resolved'
       ev.resolvedAt = new Date().toLocaleString('zh-CN', { hour12: false })
+      logStore.logAlertResolved(ev, ev.receiver)
     }
     if (activeDialog.value?.id === id) activeDialog.value = null
   }

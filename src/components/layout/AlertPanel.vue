@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
- * 右侧告警信息流 - 实时告警列表与处理状态
- * 新增功能：关键字搜索 + 类型筛选 + 紧急程度筛选 + 激活标签显示
+ * 右侧信息面板 - 支持标签切换：告警中心 / 运行日志
+ * 告警中心：实时告警列表与处理状态
+ * 运行日志：产线重要事件时间线
  */
 import { ref, computed } from 'vue'
 import {
@@ -15,14 +16,24 @@ import {
   X,
   Filter,
   Download,
+  History,
 } from 'lucide-vue-next'
 import { useAlertStore } from '@/stores/alert'
 import { URGENCY_CONFIG } from '@/utils/mock'
 import { filterAlerts } from '@/utils/alertFilter'
 import { exportCsv, STATUS_LABELS } from '@/utils/exportCsv'
 import type { AlertEvent, FaultType, Urgency } from '@/types'
+import LogPanel from './LogPanel.vue'
 
 const alertStore = useAlertStore()
+
+type PanelTab = 'alert' | 'log'
+const activeTab = ref<PanelTab>('alert')
+
+const tabs: { id: PanelTab; label: string; icon: typeof Bell }[] = [
+  { id: 'alert', label: '告警中心', icon: Bell },
+  { id: 'log', label: '运行日志', icon: History },
+]
 
 /* ================== 状态 ================== */
 /** 搜索关键字 */
@@ -195,9 +206,33 @@ const clearAllFilters = () => {
     class="w-80 flex flex-col border-l relative z-10"
     style="background: var(--bg-panel); border-color: var(--border)"
   >
-    <!-- 头部 -->
-    <div class="px-4 py-4 border-b flex-shrink-0" style="border-color: var(--border)">
-      <div class="flex items-center justify-between mb-3">
+    <!-- 标签切换栏 -->
+    <div class="flex border-b flex-shrink-0" style="border-color: var(--border)">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        class="flex-1 h-11 flex items-center justify-center gap-1.5 text-[12px] font-medium transition-all relative"
+        :style="{
+          color: activeTab === tab.id ? 'var(--accent)' : 'var(--text-muted)',
+        }"
+        @click="activeTab = tab.id"
+      >
+        <component :is="tab.icon" :size="14" />
+        <span>{{ tab.label }}</span>
+        <span
+          class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full transition-all"
+          :style="{
+            background: activeTab === tab.id ? 'var(--accent)' : 'transparent',
+          }"
+        />
+      </button>
+    </div>
+
+    <!-- 告警中心面板 -->
+    <div v-show="activeTab === 'alert'" class="flex-1 flex flex-col min-h-0">
+      <!-- 头部 -->
+      <div class="px-4 py-4 border-b flex-shrink-0" style="border-color: var(--border)">
+        <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
           <Bell :size="18" style="color: var(--danger)" />
           <h2 class="module-title">告警中心</h2>
@@ -478,5 +513,9 @@ const clearAllFilters = () => {
         </div>
       </div>
     </div>
+    </div>
+
+    <!-- 运行日志面板 -->
+    <LogPanel v-show="activeTab === 'log'" class="flex-1 min-h-0" />
   </aside>
 </template>
