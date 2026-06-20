@@ -90,6 +90,9 @@ export interface SpeedPoint {
   value: number
 }
 
+/** 速度趋势图时间范围 */
+export type SpeedTimeRange = '1min' | '5min' | '15min'
+
 /** 运行日志事件类型 */
 export type LogEventType =
   | 'status_change'

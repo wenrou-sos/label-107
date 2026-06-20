@@ -10,16 +10,35 @@ import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { TrendingUp, Zap, Activity, Download } from 'lucide-vue-next'
+import { TrendingUp, Zap, Activity, Download, Pause, Play, Clock } from 'lucide-vue-next'
 import { useSortingStore } from '@/stores/sorting'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
 import { useChartTheme } from '@/composables/useECharts'
 import { exportCsv, STATUS_LABELS } from '@/utils/exportCsv'
+import type { SpeedTimeRange } from '@/types'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
 
 const store = useSortingStore()
 const { isDark, palette } = useChartTheme()
+
+/** 时间范围选项 */
+const timeRangeOptions: { value: SpeedTimeRange; label: string }[] = [
+  { value: '1min', label: '1 分钟' },
+  { value: '5min', label: '5 分钟' },
+  { value: '15min', label: '15 分钟' },
+]
+
+const handleTimeRangeChange = (range: SpeedTimeRange) => {
+  store.setSpeedTimeRange(range)
+}
+
+/** 时间范围标签映射，用于 CSV 导出 */
+const timeRangeLabels: Record<SpeedTimeRange, string> = {
+  '1min': '1 分钟',
+  '5min': '5 分钟',
+  '15min': '15 分钟',
+}
 
 const totalDisplay = useAnimatedNumber(() => store.totalWeight, 700)
 const speedDisplay = useAnimatedNumber(() => store.speed, 700)
@@ -120,9 +139,11 @@ const handleExport = () => {
   rows.push(['今日处理总量(吨)', store.totalWeight.toFixed(2)])
   rows.push(['分选速度(吨/小时)', store.speed.toFixed(1)])
   rows.push(['运行状态', STATUS_LABELS[store.status] || store.status])
+  rows.push(['图表时间范围', timeRangeLabels[store.speedTimeRange]])
+  rows.push(['图表状态', store.chartPaused ? '已暂停' : '实时更新'])
   rows.push([])
   // 速度历史记录
-  rows.push(['=== 过去一分钟速度历史记录 ==='])
+  rows.push([`=== 过去${timeRangeLabels[store.speedTimeRange]}速度历史记录 ===`])
   rows.push(['序号', '时间戳', '分选速度(吨/小时)'])
   store.speedHistory.forEach((p, i) => {
     rows.push([i + 1, p.time, p.value.toFixed(2)])
@@ -138,11 +159,25 @@ const handleExport = () => {
       <div class="flex items-center gap-2">
         <span
           class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-          :style="{ background: 'var(--accent-soft)', color: 'var(--accent)' }"
+          :style="{
+            background: store.chartPaused ? 'var(--warning-soft)' : 'var(--accent-soft)',
+            color: store.chartPaused ? 'var(--warning)' : 'var(--accent)',
+          }"
         >
-          <Activity :size="12" />
-          实时
+          <component :is="store.chartPaused ? Pause : Activity" :size="12" />
+          {{ store.chartPaused ? '图表已暂停' : '实时' }}
         </span>
+        <button
+          class="w-7 h-7 rounded-md flex items-center justify-center transition-all hover:scale-105"
+          :style="{
+            background: 'var(--bg-elevated)',
+            color: store.chartPaused ? 'var(--success)' : 'var(--text-muted)',
+          }"
+          :title="store.chartPaused ? '恢复图表更新' : '暂停图表更新'"
+          @click="store.toggleChartPause()"
+        >
+          <component :is="store.chartPaused ? Play : Pause" :size="13" />
+        </button>
         <button
           class="w-7 h-7 rounded-md flex items-center justify-center transition-all hover:scale-105"
           :style="{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }"
@@ -189,9 +224,33 @@ const handleExport = () => {
         class="rounded-xl p-4 flex flex-col justify-between"
         style="background: var(--bg-elevated)"
       >
-        <div class="flex items-center gap-1.5">
-          <Zap :size="14" style="color: var(--warning)" />
-          <span class="metric-label">分选速度</span>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <Zap :size="14" style="color: var(--warning)" />
+            <span class="metric-label">分选速度</span>
+          </div>
+          <div class="flex items-center gap-0.5 rounded-md p-0.5" style="background: var(--bg-card)">
+            <button
+              v-for="opt in timeRangeOptions"
+              :key="opt.value"
+              class="px-1.5 h-5 rounded text-[10px] font-medium transition-all flex items-center gap-0.5"
+              :style="
+                store.speedTimeRange === opt.value
+                  ? {
+                      background: 'var(--warning-soft)',
+                      color: 'var(--warning)',
+                    }
+                  : {
+                      color: 'var(--text-muted)',
+                    }
+              "
+              :title="`查看最近 ${opt.label} 趋势`"
+              @click="handleTimeRangeChange(opt.value)"
+            >
+              <Clock :size="9" />
+              {{ opt.label }}
+            </button>
+          </div>
         </div>
         <div class="flex items-baseline gap-1 mt-2">
           <span class="mono text-4xl font-bold leading-none" style="color: var(--warning)">
