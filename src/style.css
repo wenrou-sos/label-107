@@ -1,0 +1,329 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   设计令牌 - 深蓝色系工业监控主题
+   ============================================ */
+:root,
+.dark {
+  --bg-base: #07111f;
+  --bg-panel: #0b1a30;
+  --bg-card: #0f2238;
+  --bg-card-hover: #142c48;
+  --bg-elevated: #122a48;
+  --border: rgba(124, 160, 220, 0.12);
+  --border-strong: rgba(124, 160, 220, 0.22);
+  --text-primary: #e8eff8;
+  --text-secondary: #8da2c0;
+  --text-muted: #5c7090;
+  --accent: #4f8dff;
+  --accent-soft: rgba(79, 141, 255, 0.14);
+  --success: #34d9a4;
+  --success-soft: rgba(52, 217, 164, 0.14);
+  --danger: #ff4d5e;
+  --danger-soft: rgba(255, 77, 94, 0.14);
+  --warning: #ffa940;
+  --warning-soft: rgba(255, 169, 64, 0.14);
+  --gold: #f5c242;
+  --gold-soft: rgba(245, 194, 66, 0.14);
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.28);
+  --shadow-glow: 0 0 0 1px var(--border), 0 12px 40px rgba(79, 141, 255, 0.08);
+  --grid-line: rgba(124, 160, 220, 0.06);
+}
+
+.light {
+  --bg-base: #eaeef6;
+  --bg-panel: #f4f7fc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f4fa;
+  --bg-elevated: #ffffff;
+  --border: rgba(11, 31, 58, 0.1);
+  --border-strong: rgba(11, 31, 58, 0.18);
+  --text-primary: #0b1f3a;
+  --text-secondary: #4a5b75;
+  --text-muted: #7a8aa3;
+  --accent: #2f7bff;
+  --accent-soft: rgba(47, 123, 255, 0.1);
+  --success: #12b886;
+  --success-soft: rgba(18, 184, 134, 0.1);
+  --danger: #e84555;
+  --danger-soft: rgba(232, 69, 85, 0.1);
+  --warning: #e89530;
+  --warning-soft: rgba(232, 149, 48, 0.1);
+  --gold: #d9a828;
+  --gold-soft: rgba(217, 168, 40, 0.12);
+  --shadow-card: 0 6px 24px rgba(11, 31, 58, 0.08);
+  --shadow-glow: 0 0 0 1px var(--border), 0 8px 30px rgba(11, 31, 58, 0.06);
+  --grid-line: rgba(11, 31, 58, 0.04);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Noto Sans SC', 'Saira', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* 工业风网格背景 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================
+   通用组件样式
+   ============================================ */
+.mono {
+  font-family: 'JetBrains Mono', 'Saira', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.display-font {
+  font-family: 'Saira', 'Noto Sans SC', sans-serif;
+}
+
+.panel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.panel-card:hover {
+  border-color: var(--border-strong);
+}
+
+.panel-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-strong),
+    transparent
+  );
+}
+
+.module-title {
+  font-family: 'Saira', 'Noto Sans SC', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.module-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--accent), var(--success));
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+/* 状态指示灯脉冲动画 */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 0.7;
+  }
+  70% {
+    box-shadow: 0 0 0 8px transparent;
+    opacity: 0;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    opacity: 0;
+  }
+}
+
+.status-dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: pulse-ring 2s infinite;
+  color: inherit;
+}
+
+.status-running {
+  background: var(--success);
+  color: var(--success);
+}
+
+.status-stopped {
+  background: var(--text-muted);
+}
+
+.status-fault {
+  background: var(--danger);
+  color: var(--danger);
+}
+
+/* 数字翻滚动画 */
+@keyframes number-pop {
+  0% {
+    transform: scale(1);
+    color: var(--text-primary);
+  }
+  40% {
+    transform: scale(1.08);
+    color: var(--accent);
+  }
+  100% {
+    transform: scale(1);
+    color: var(--text-primary);
+  }
+}
+
+.animate-number-pop {
+  animation: number-pop 0.6s ease;
+}
+
+/* 件数达成动画 */
+@keyframes count-celebrate {
+  0% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  30% {
+    transform: scale(1.18) rotate(-2deg);
+    filter: brightness(1.4);
+  }
+  60% {
+    transform: scale(1.12) rotate(2deg);
+    filter: brightness(1.2);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+}
+
+.animate-count-celebrate {
+  animation: count-celebrate 0.8s ease;
+}
+
+/* 淡入上升 */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease both;
+}
+
+/* 告警条目进入 */
+@keyframes alert-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-alert-in {
+  animation: alert-in 0.4s ease both;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Element Plus 主题适配 */
+.el-button {
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+.el-tabs__item {
+  font-family: 'Saira', 'Noto Sans SC', sans-serif;
+  font-weight: 500;
+}
+
+.dark .el-dialog {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-strong);
+}
