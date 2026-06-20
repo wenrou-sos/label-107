@@ -12,6 +12,8 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useSortingStore } from '@/stores/sorting'
 import { useChartTheme } from '@/composables/useECharts'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
+import { Download } from 'lucide-vue-next'
+import { exportCsv } from '@/utils/exportCsv'
 
 echarts.use([PieChart, TooltipComponent, LegendComponent, CanvasRenderer])
 
@@ -88,13 +90,42 @@ const w1 = useAnimatedNumber(() => store.grades[1]?.weight ?? 0, 700)
 const w2 = useAnimatedNumber(() => store.grades[2]?.weight ?? 0, 700)
 const w3 = useAnimatedNumber(() => store.grades[3]?.weight ?? 0, 700)
 const animatedWeights = computed(() => [w0.value, w1.value, w2.value, w3.value])
+
+/**
+ * 导出等级分析数据 CSV
+ * 内容：四个等级各自的重量和占比
+ */
+const handleExport = () => {
+  const rows: unknown[][] = []
+  rows.push(['等级产出比例分析报表'])
+  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push([])
+  rows.push(['今日累计总量(吨)', store.totalWeight.toFixed(2)])
+  rows.push([])
+  rows.push(['等级名称', '重量(吨)', '占比(%)'])
+  store.grades.forEach((g) => {
+    const percent = store.totalWeight > 0 ? ((g.weight / store.totalWeight) * 100).toFixed(1) : '0.0'
+    rows.push([g.label, g.weight.toFixed(2), percent])
+  })
+  exportCsv('等级分析数据', rows)
+}
 </script>
 
 <template>
   <div class="panel-card p-5 h-full flex flex-col">
     <div class="flex items-center justify-between mb-2">
       <h3 class="module-title">等级产出比例分析</h3>
-      <span class="text-xs text-muted">实时更新</span>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-muted">实时更新</span>
+        <button
+          class="w-7 h-7 rounded-md flex items-center justify-center transition-all hover:scale-105"
+          :style="{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }"
+          title="导出 CSV"
+          @click="handleExport"
+        >
+          <Download :size="14" />
+        </button>
+      </div>
     </div>
 
     <div class="flex items-center gap-3 flex-1 min-h-0">

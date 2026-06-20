@@ -14,10 +14,12 @@ import {
   Search,
   X,
   Filter,
+  Download,
 } from 'lucide-vue-next'
 import { useAlertStore } from '@/stores/alert'
 import { URGENCY_CONFIG } from '@/utils/mock'
 import { filterAlerts } from '@/utils/alertFilter'
+import { exportCsv, STATUS_LABELS } from '@/utils/exportCsv'
 import type { AlertEvent, FaultType, Urgency } from '@/types'
 
 const alertStore = useAlertStore()
@@ -143,6 +145,43 @@ const toggleUrgencyFilter = (urgency: Urgency) => {
   }
 }
 
+/**
+ * 导出全部告警事件 CSV
+ * 字段：告警ID、类型、位置、紧急程度、详情、创建时间、状态、处理人、解决时间
+ */
+const handleExport = () => {
+  const rows: unknown[][] = []
+  rows.push(['告警中心全部事件报表'])
+  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push(['告警总数', alertStore.events.length])
+  rows.push([])
+  rows.push([
+    '告警ID',
+    '类型',
+    '位置',
+    '紧急程度',
+    '详情',
+    '创建时间',
+    '状态',
+    '处理人',
+    '解决时间',
+  ])
+  alertStore.events.forEach((ev) => {
+    rows.push([
+      ev.id,
+      ev.typeLabel,
+      ev.location,
+      URGENCY_CONFIG[ev.urgency]?.label || ev.urgency,
+      ev.detail,
+      ev.createdAt,
+      statusMeta[ev.status]?.label || STATUS_LABELS[ev.status] || ev.status,
+      ev.receiver || '',
+      (ev as AlertEvent & { resolvedAt?: string }).resolvedAt || '',
+    ])
+  })
+  exportCsv('告警事件', rows)
+}
+
 /** 清除所有筛选条件 */
 const clearAllFilters = () => {
   searchKeyword.value = ''
@@ -163,14 +202,25 @@ const clearAllFilters = () => {
           <Bell :size="18" style="color: var(--danger)" />
           <h2 class="module-title">告警中心</h2>
         </div>
-        <button
-          v-if="alertStore.events.length"
-          class="text-muted hover:text-danger transition-colors"
-          title="清空告警"
-          @click="alertStore.clearAll()"
-        >
-          <Trash2 :size="15" />
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="alertStore.events.length"
+            class="w-7 h-7 rounded-md flex items-center justify-center transition-all hover:scale-105"
+            :style="{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }"
+            title="导出全部 CSV"
+            @click="handleExport"
+          >
+            <Download :size="13" />
+          </button>
+          <button
+            v-if="alertStore.events.length"
+            class="text-muted hover:text-danger transition-colors"
+            title="清空告警"
+            @click="alertStore.clearAll()"
+          >
+            <Trash2 :size="15" />
+          </button>
+        </div>
       </div>
 
       <!-- 统计 -->

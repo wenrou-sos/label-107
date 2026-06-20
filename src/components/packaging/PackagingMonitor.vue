@@ -7,10 +7,11 @@
  * - 在线工人数（手动更新）
  */
 import { ref, watch } from 'vue'
-import { PackageCheck, Minus, Plus, Users, Boxes } from 'lucide-vue-next'
+import { PackageCheck, Minus, Plus, Users, Boxes, Download } from 'lucide-vue-next'
 import { usePackagingStore } from '@/stores/packaging'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
 import { SPEC_OPTIONS, FRUIT_VARIETIES } from '@/utils/mock'
+import { exportCsv } from '@/utils/exportCsv'
 
 const store = usePackagingStore()
 
@@ -30,19 +31,48 @@ const specIcons: Record<string, string> = {
   '10kg': '🗂️',
   gift: '🎁',
 }
+
+/**
+ * 导出包装区数据 CSV
+ * 内容：当前品种、规格、包装件数
+ */
+const handleExport = () => {
+  const rows: unknown[][] = []
+  rows.push(['包装区监控报表'])
+  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push([])
+  rows.push(['当前品种', store.state.variety.name])
+  const spec = SPEC_OPTIONS.find((o) => o.value === store.state.spec)
+  rows.push(['包装规格', `${spec?.label || store.state.spec}（${spec?.desc || ''}）`])
+  rows.push(['包装完成件数', store.state.packedCount])
+  rows.push(['在线工人数量', store.state.workers])
+  rows.push([])
+  rows.push(['规格说明：', '5kg装=标准零售装 | 10kg装=家庭量贩装 | 礼盒装=精品礼盒装'])
+  exportCsv('包装区数据', rows)
+}
 </script>
 
 <template>
   <div class="panel-card p-5 h-full flex flex-col">
     <div class="flex items-center justify-between mb-3">
       <h3 class="module-title">包装区监控</h3>
-      <span
-        class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-        style="background: var(--success-soft); color: var(--success)"
-      >
-        <PackageCheck :size="11" />
-        正常运行
-      </span>
+      <div class="flex items-center gap-2">
+        <span
+          class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+          style="background: var(--success-soft); color: var(--success)"
+        >
+          <PackageCheck :size="11" />
+          正常运行
+        </span>
+        <button
+          class="w-7 h-7 rounded-md flex items-center justify-center transition-all hover:scale-105"
+          :style="{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }"
+          title="导出 CSV"
+          @click="handleExport"
+        >
+          <Download :size="14" />
+        </button>
+      </div>
     </div>
 
     <div class="flex items-center gap-3 mb-3">

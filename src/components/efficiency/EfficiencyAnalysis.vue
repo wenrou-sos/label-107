@@ -10,11 +10,12 @@ import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent, MarkAreaComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { TrendingUp, TrendingDown, Target } from 'lucide-vue-next'
+import { TrendingUp, TrendingDown, Target, Download } from 'lucide-vue-next'
 import { useEfficiencyStore } from '@/stores/efficiency'
 import { useChartTheme } from '@/composables/useECharts'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
 import type { EfficiencyDimension } from '@/types'
+import { exportCsv } from '@/utils/exportCsv'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, MarkAreaComponent, CanvasRenderer])
 
@@ -143,26 +144,61 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
   chart?.dispose()
 })
+
+/**
+ * 导出效率分析数据 CSV
+ * 内容：当前维度（小时/班次）下的所有记录（计划值、实际值、偏差率）
+ */
+const handleExport = () => {
+  const dimLabel = store.dimension === 'hour' ? '按小时' : '按班次'
+  const rows: unknown[][] = []
+  rows.push(['当日产线效率分析报表'])
+  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push(['分析维度', dimLabel])
+  rows.push([])
+  rows.push(['整体汇总'])
+  rows.push(['计划产出(吨)', store.totalPlanned.toFixed(1)])
+  rows.push(['实际产出(吨)', store.totalActual.toFixed(1)])
+  rows.push(['整体偏差率(%)', (store.totalDeviation >= 0 ? '+' : '') + store.totalDeviation])
+  rows.push([])
+  rows.push(['=== 详细记录（' + dimLabel + '）==='])
+  rows.push(['时间/班次', '计划产出(吨)', '实际产出(吨)', '偏差率(%)'])
+  store.records.forEach((r) => {
+    const dev = (r.deviation >= 0 ? '+' : '') + r.deviation.toFixed(1)
+    rows.push([r.label, r.planned.toFixed(1), r.actual.toFixed(1), dev + '%'])
+  })
+  exportCsv('效率分析数据', rows)
+}
 </script>
 
 <template>
   <div class="panel-card p-5 h-full flex flex-col">
     <div class="flex items-center justify-between mb-3">
       <h3 class="module-title">当日产线效率分析</h3>
-      <!-- 维度切换 -->
-      <div class="flex rounded-lg p-0.5" style="background: var(--bg-elevated)">
+      <div class="flex items-center gap-2">
+        <!-- 维度切换 -->
+        <div class="flex rounded-lg p-0.5" style="background: var(--bg-elevated)">
+          <button
+            v-for="tab in dimensionTabs"
+            :key="tab.value"
+            class="px-3 py-1 rounded-md text-xs font-medium transition-all"
+            :style="
+              store.dimension === tab.value
+                ? { background: 'var(--accent)', color: '#fff' }
+                : { color: 'var(--text-muted)' }
+            "
+            @click="store.setDimension(tab.value)"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
         <button
-          v-for="tab in dimensionTabs"
-          :key="tab.value"
-          class="px-3 py-1 rounded-md text-xs font-medium transition-all"
-          :style="
-            store.dimension === tab.value
-              ? { background: 'var(--accent)', color: '#fff' }
-              : { color: 'var(--text-muted)' }
-          "
-          @click="store.setDimension(tab.value)"
+          class="w-7 h-7 rounded-md flex items-center justify-center transition-all hover:scale-105"
+          :style="{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }"
+          title="导出 CSV"
+          @click="handleExport"
         >
-          {{ tab.label }}
+          <Download :size="14" />
         </button>
       </div>
     </div>

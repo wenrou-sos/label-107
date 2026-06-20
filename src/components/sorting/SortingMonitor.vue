@@ -10,10 +10,11 @@ import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { TrendingUp, Zap, Activity } from 'lucide-vue-next'
+import { TrendingUp, Zap, Activity, Download } from 'lucide-vue-next'
 import { useSortingStore } from '@/stores/sorting'
 import { useAnimatedNumber } from '@/composables/useAnimatedNumber'
 import { useChartTheme } from '@/composables/useECharts'
+import { exportCsv, STATUS_LABELS } from '@/utils/exportCsv'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
 
@@ -103,19 +104,54 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
   chart?.dispose()
 })
+
+/**
+ * 导出分选线数据 CSV
+ * 内容：
+ * - 头部：当前处理总量、分选速度、运行状态
+ * - 速度历史：时间戳、速度值
+ */
+const handleExport = () => {
+  const rows: unknown[][] = []
+  // 汇总信息
+  rows.push(['分选线监控数据报表'])
+  rows.push(['导出时间', new Date().toLocaleString()])
+  rows.push([])
+  rows.push(['今日处理总量(吨)', store.totalWeight.toFixed(2)])
+  rows.push(['分选速度(吨/小时)', store.speed.toFixed(1)])
+  rows.push(['运行状态', STATUS_LABELS[store.status] || store.status])
+  rows.push([])
+  // 速度历史记录
+  rows.push(['=== 过去一分钟速度历史记录 ==='])
+  rows.push(['序号', '时间戳', '分选速度(吨/小时)'])
+  store.speedHistory.forEach((p, i) => {
+    rows.push([i + 1, p.time, p.value.toFixed(2)])
+  })
+  exportCsv('分选线数据', rows)
+}
 </script>
 
 <template>
   <div class="panel-card p-5 h-full flex flex-col">
     <div class="flex items-center justify-between mb-4">
       <h3 class="module-title">分选线实时数据</h3>
-      <span
-        class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-        :style="{ background: 'var(--accent-soft)', color: 'var(--accent)' }"
-      >
-        <Activity :size="12" />
-        实时
-      </span>
+      <div class="flex items-center gap-2">
+        <span
+          class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+          :style="{ background: 'var(--accent-soft)', color: 'var(--accent)' }"
+        >
+          <Activity :size="12" />
+          实时
+        </span>
+        <button
+          class="w-7 h-7 rounded-md flex items-center justify-center transition-all hover:scale-105"
+          :style="{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }"
+          title="导出 CSV"
+          @click="handleExport"
+        >
+          <Download :size="14" />
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-2 gap-4 flex-1">
