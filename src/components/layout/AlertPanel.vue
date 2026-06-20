@@ -17,6 +17,7 @@ import {
 } from 'lucide-vue-next'
 import { useAlertStore } from '@/stores/alert'
 import { URGENCY_CONFIG } from '@/utils/mock'
+import { filterAlerts } from '@/utils/alertFilter'
 import type { AlertEvent, FaultType, Urgency } from '@/types'
 
 const alertStore = useAlertStore()
@@ -61,27 +62,13 @@ const urgencyFilterOptions: { value: Urgency; label: string }[] = [
 /**
  * 过滤后的告警列表
  * 逻辑：关键字搜索 AND 类型筛选 AND 紧急程度筛选
+ * 搜索匹配范围：类型名称、详情、位置、紧急程度文字
  */
 const filteredEvents = computed(() => {
-  const kw = searchKeyword.value.trim().toLowerCase()
-  return alertStore.events.filter((ev) => {
-    // 1. 关键字搜索（匹配类型标签、详情、位置）
-    if (kw) {
-      const hit =
-        ev.typeLabel.toLowerCase().includes(kw) ||
-        ev.detail.toLowerCase().includes(kw) ||
-        ev.location.toLowerCase().includes(kw)
-      if (!hit) return false
-    }
-    // 2. 类型筛选
-    if (typeFilters.value.size > 0 && !typeFilters.value.has(ev.type)) {
-      return false
-    }
-    // 3. 紧急程度筛选
-    if (urgencyFilters.value.size > 0 && !urgencyFilters.value.has(ev.urgency)) {
-      return false
-    }
-    return true
+  return filterAlerts(alertStore.events, {
+    keyword: searchKeyword.value,
+    types: typeFilters.value,
+    urgencies: urgencyFilters.value,
   })
 })
 
