@@ -34,6 +34,11 @@ const scrollTo = (id: string) => {
   const el = document.getElementById(`section-${id}`)
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // 给目标元素添加闪烁高亮，2.4s 后移除
+    el.classList.add('nav-highlight-flash')
+    window.setTimeout(() => {
+      el.classList.remove('nav-highlight-flash')
+    }, 2600)
   }
 }
 </script>

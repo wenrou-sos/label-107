@@ -154,7 +154,7 @@ const handleResolve = () => {
               color: alertStore.activeDialog.status === 'received' || alertStore.activeDialog.status === 'resolved' ? 'var(--success)' : 'var(--text-muted)',
             }"
           />
-          <span class="text-[11px]" :class="alertStore.activeDialog.status !== 'pending' ? 'text-primary' : 'text-muted'">
+          <span class="text-[11px]" :class="alertStore.activeDialog.status === 'received' || alertStore.activeDialog.status === 'resolved' ? 'text-primary' : 'text-muted'">
             已接收
           </span>
         </div>
@@ -185,7 +185,7 @@ const handleResolve = () => {
           推送维修组
         </el-button>
         <el-button
-          v-if="alertStore.activeDialog?.status === 'pending'"
+          v-if="alertStore.activeDialog?.status === 'pending' || alertStore.activeDialog?.status === 'pushed'"
           type="primary"
           class="flex-1"
           @click="handleConfirm"
@@ -194,7 +194,7 @@ const handleResolve = () => {
           确认接收
         </el-button>
         <el-button
-          v-if="alertStore.activeDialog?.status !== 'resolved'"
+          v-if="alertStore.activeDialog?.status === 'received' || alertStore.activeDialog?.status === 'pushed'"
           type="success"
           class="flex-1"
           @click="handleResolve"
@@ -202,7 +202,12 @@ const handleResolve = () => {
           <CircleCheck :size="14" class="mr-1" />
           处理完成
         </el-button>
-        <el-button v-else type="info" class="flex-1" @click="dialogVisible = false">
+        <el-button
+          v-if="alertStore.activeDialog?.status === 'resolved'"
+          type="info"
+          class="flex-1"
+          @click="dialogVisible = false"
+        >
           关闭
         </el-button>
       </div>

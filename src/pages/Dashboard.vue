@@ -3,7 +3,7 @@
  * 监控总览页 - 三栏式车间指挥大屏
  * 左侧导航 | 中间主监控区 | 右侧告警信息区
  */
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onBeforeUnmount, watch } from 'vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import SideNav from '@/components/layout/SideNav.vue'
 import AlertPanel from '@/components/layout/AlertPanel.vue'
@@ -32,6 +32,8 @@ const startSimulation = () => {
     // 小概率触发故障（约每 30-50 秒一次）
     if (Math.random() < 0.25 && sortingStore.status !== 'fault') {
       alertStore.triggerFault()
+      // 触发故障时联动分选线状态为"故障"
+      sortingStore.setStatus('fault')
     }
   }, 5000)
 
@@ -40,6 +42,16 @@ const startSimulation = () => {
     packagingStore.tick()
   }, 3000)
 }
+
+/** 当所有未处理告警都被解决时，恢复分选线为"运行中" */
+watch(
+  () => alertStore.unresolvedCount,
+  (count) => {
+    if (count === 0 && sortingStore.status === 'fault') {
+      sortingStore.setStatus('running')
+    }
+  }
+)
 
 onMounted(() => {
   startSimulation()
@@ -85,7 +97,9 @@ onBeforeUnmount(() => {
       </main>
 
       <!-- 右侧告警信息流 -->
-      <AlertPanel />
+      <div id="section-alert">
+        <AlertPanel />
+      </div>
     </div>
 
     <!-- 故障告警弹窗 -->

@@ -9,8 +9,9 @@ import type { AlertEvent } from '@/types'
 
 const alertStore = useAlertStore()
 
-const statusMeta = {
+const statusMeta: Record<string, { label: string; color: string; bg: string }> = {
   pending: { label: '待处理', color: 'var(--danger)', bg: 'var(--danger-soft)' },
+  pushed: { label: '已推送', color: 'var(--accent)', bg: 'var(--accent-soft)' },
   received: { label: '已接收', color: 'var(--warning)', bg: 'var(--warning-soft)' },
   resolved: { label: '已完成', color: 'var(--success)', bg: 'var(--success-soft)' },
 }
@@ -138,7 +139,7 @@ const handleResolve = (ev: AlertEvent) => alertStore.markResolved(ev.id)
 
           <div v-if="ev.status !== 'resolved'" class="flex gap-1.5">
             <button
-              v-if="ev.status === 'pending'"
+              v-if="ev.status === 'pending' || ev.status === 'pushed'"
               class="text-[11px] px-2.5 py-1 rounded-md font-medium transition-all hover:scale-105"
               style="background: var(--warning-soft); color: var(--warning)"
               @click="handleConfirm(ev)"

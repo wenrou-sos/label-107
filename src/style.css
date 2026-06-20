@@ -327,3 +327,20 @@ body::before {
   background: var(--bg-elevated) !important;
   border: 1px solid var(--border-strong);
 }
+
+/* 导航定位高亮闪烁 */
+@keyframes nav-highlight {
+  0% {
+    box-shadow: 0 0 0 0 var(--danger);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 77, 94, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.nav-highlight-flash {
+  animation: nav-highlight 1.2s ease 2;
+}

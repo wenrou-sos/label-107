@@ -17,8 +17,8 @@ export type FaultType = 'sensor' | 'weight' | 'optical'
 /** 紧急程度 */
 export type Urgency = 'high' | 'medium' | 'low'
 
-/** 告警流转状态 */
-export type AlertStatus = 'pending' | 'received' | 'resolved'
+/** 告警流转状态：待处理 → 已推送 → 已接收 → 已完成 */
+export type AlertStatus = 'pending' | 'pushed' | 'received' | 'resolved'
 
 /** 效率分析维度 */
 export type EfficiencyDimension = 'hour' | 'shift'

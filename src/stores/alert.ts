@@ -16,11 +16,18 @@ export const useAlertStore = defineStore('alert', () => {
   const pendingCount = computed(
     () => events.value.filter((e) => e.status === 'pending').length
   )
+  const pushedCount = computed(
+    () => events.value.filter((e) => e.status === 'pushed').length
+  )
   const receivedCount = computed(
     () => events.value.filter((e) => e.status === 'received').length
   )
   const resolvedCount = computed(
     () => events.value.filter((e) => e.status === 'resolved').length
+  )
+  /** 未完成的告警数量（用于判断是否将产线置为故障态） */
+  const unresolvedCount = computed(
+    () => events.value.filter((e) => e.status !== 'resolved').length
   )
 
   /** 触发一次故障 */
@@ -31,21 +38,21 @@ export const useAlertStore = defineStore('alert', () => {
     if (!activeDialog.value) activeDialog.value = ev
   }
 
-  /** 推送至维修组 */
+  /** 推送至维修组（仅标记"已推送"，需维修组另行"确认接收"） */
   const pushToRepair = (id: string) => {
     const ev = events.value.find((e) => e.id === id)
     if (ev && ev.status === 'pending') {
-      ev.status = 'received'
+      ev.status = 'pushed'
       ev.receiver = repairTeam.value
     }
   }
 
-  /** 确认接收 */
+  /** 确认接收（可从待处理或已推送状态推进到"已接收"） */
   const confirmReceived = (id: string) => {
     const ev = events.value.find((e) => e.id === id)
-    if (ev && ev.status === 'pending') {
+    if (ev && (ev.status === 'pending' || ev.status === 'pushed')) {
       ev.status = 'received'
-      ev.receiver = repairTeam.value
+      ev.receiver = ev.receiver || repairTeam.value
     }
   }
 
@@ -75,8 +82,10 @@ export const useAlertStore = defineStore('alert', () => {
     activeDialog,
     repairTeam,
     pendingCount,
+    pushedCount,
     receivedCount,
     resolvedCount,
+    unresolvedCount,
     triggerFault,
     pushToRepair,
     confirmReceived,
